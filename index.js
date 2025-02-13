@@ -1,16 +1,26 @@
-// index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { validateVAT } = require('./vatValidator');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
 
-// Endpoint voor BTW validatie
+// Homepage route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Shopify BTW Validator API',
+    endpoints: {
+      validateVAT: '/api/validate-vat',
+      health: '/health'
+    }
+  });
+});
+
+// BTW validatie endpoint
 app.post('/api/validate-vat', async (req, res) => {
   try {
     const { vatNumber } = req.body;
