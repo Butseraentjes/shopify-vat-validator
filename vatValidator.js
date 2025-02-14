@@ -1,4 +1,3 @@
-// vatValidator.js
 const fetch = require('node-fetch');
 
 async function validateVAT(vatNumber) {
@@ -52,3 +51,27 @@ async function validateVAT(vatNumber) {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
+        }
+      );
+      
+      const altData = await altResponse.json();
+      if (altData.valid) {
+        return {
+          isValid: true,
+          message: 'BTW nummer is geldig'
+        };
+      }
+    }
+
+    return {
+      isValid: data.valid,
+      message: data.valid ? 'BTW nummer is geldig' : 'BTW nummer is ongeldig'
+    };
+
+  } catch (error) {
+    console.error('Error validating VAT:', error);
+    throw new Error('Fout bij het valideren van BTW nummer: ' + error.message);
+  }
+}
+
+module.exports = { validateVAT };
