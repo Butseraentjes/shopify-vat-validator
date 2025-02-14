@@ -3,23 +3,15 @@ const fetch = require('node-fetch');
 
 async function validateVAT(vatNumber) {
   try {
-    // Verwijder alle niet-alfanumerieke karakters
-    const cleanVAT = vatNumber.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-    const countryCode = cleanVAT.substring(0, 2);
-    let number = cleanVAT.substring(2);
-
-    // Voor Belgische BTW nummers
-    if (countryCode === 'BE') {
-      // Format het nummer volgens VIES specificaties
-      number = number.padStart(10, '0'); // Zorg voor 10 cijfers met leading zeros
-    }
-
-    console.log('Processing VAT:', {
+    const countryCode = vatNumber.substring(0, 2).toUpperCase();
+    const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
+    
+    // Log voor debugging
+    console.log('Validating:', {
       original: vatNumber,
-      cleaned: cleanVAT,
       countryCode,
       number,
-      requestUrl: `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`
+      url: `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`
     });
 
     const response = await fetch(
@@ -31,28 +23,25 @@ async function validateVAT(vatNumber) {
       }
     );
 
-    const data = await response.json();
-    console.log('VIES API response:', data);
+    console.log('Response status:', response.status); // Debug log
 
-    if (data.valid) {
-      return {
-        isValid: true,
-        message: `BTW nummer is geldig voor: ${data.name}. BTW-vrijstelling wordt toegepast.`,
-        details: {
-          ...data,
-          isValid: true
-        }
-      };
-    } else {
-      return {
-        isValid: false,
-        message: 'Ongeldig BTW nummer.',
-        details: {
-          ...data,
-          isValid: false
-        }
-      };
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    console.log('API Response:', data); // Debug log
+
+    return {
+      isValid: data.valid === true,
+      message: data.valid === true
+        ? `BTW nummer is geldig voor: ${data.name}. BTW-vrijstelling wordt toegepast.`
+        : 'Ongeldig BTW nummer.',
+      details: {
+        ...data,
+        isValid: data.valid === true
+      }
+    };
   } catch (error) {
     console.error('VIES API error:', error);
     return {
