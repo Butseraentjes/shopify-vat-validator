@@ -20,7 +20,7 @@ app.post('/api/validate-vat', async (req, res) => {
       });
     }
 
-    console.log('Validating VAT number:', vatNumber); // Debug logging
+    console.log('Received VAT number:', vatNumber); // Debug logging
     const validationResult = await validateVAT(vatNumber);
     console.log('Validation result:', validationResult); // Debug logging
     
@@ -33,6 +33,11 @@ app.post('/api/validate-vat', async (req, res) => {
       error: error.message 
     });
   }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
 });
 
 app.listen(PORT, () => {
