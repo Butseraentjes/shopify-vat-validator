@@ -4,7 +4,6 @@ const https = require('https');
 
 async function validateVAT(vatNumber) {
   try {
-    // Basis format validatie
     const formatValidation = validateVATFormat(vatNumber);
     if (!formatValidation.isValid) {
       return formatValidation;
@@ -13,11 +12,10 @@ async function validateVAT(vatNumber) {
     const countryCode = vatNumber.substring(0, 2).toUpperCase();
     const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
     
-    // Gebruik de nieuwe API endpoint met extra logging
     console.log(`Validating VAT: ${countryCode} ${number}`);
     
     const agent = new https.Agent({
-      rejectUnauthorized: false // Alleen voor testing!
+      rejectUnauthorized: false
     });
 
     const response = await fetch(
@@ -28,8 +26,7 @@ async function validateVAT(vatNumber) {
         headers: {
           'Content-Type': 'text/xml;charset=UTF-8',
           'Accept': 'text/xml',
-          'SOAPAction': '',
-          'User-Agent': 'VAT-Validator/1.0'
+          'SOAPAction': ''
         },
         body: `<?xml version="1.0" encoding="UTF-8"?>
         <soap:Envelope 
@@ -53,19 +50,25 @@ async function validateVAT(vatNumber) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // Check voor geldige response
-    const isValid = responseText.includes('<valid>true</valid>');
-    const nameMatch = responseText.match(/<name>(.*?)<\/name>/);
+    // Verbeterde XML parsing
+    const isValid = responseText.includes('<ns2:valid>true</ns2:valid>');
+    const nameMatch = responseText.match(/<ns2:name>(.*?)<\/ns2:name>/s);
+    const addressMatch = responseText.match(/<ns2:address>(.*?)<\/ns2:address>/s);
+    
     const name = nameMatch ? nameMatch[1].trim() : '';
+    const address = addressMatch ? addressMatch[1].trim() : '';
+
+    console.log('Parsed results:', { isValid, name, address });
 
     return {
       isValid: isValid,
       message: isValid 
-        ? `BTW nummer is geldig voor: ${name || 'Onbekende naam'}. BTW-vrijstelling wordt toegepast.`
+        ? `BTW nummer is geldig voor: ${name}${address ? ` (${address})` : ''}. BTW-vrijstelling wordt toegepast.`
         : 'Ongeldig BTW nummer.',
       details: {
         isValid: isValid,
-        name: name
+        name: name,
+        address: address
       }
     };
   } catch (error) {
@@ -86,7 +89,6 @@ function validateVATFormat(vatNumber) {
   
   const countryCode = vatNumber.substring(0, 2).toUpperCase();
   
-  // Log voor debugging
   console.log(`Validating format for: ${vatNumber}`);
   console.log(`Country code: ${countryCode}`);
   
