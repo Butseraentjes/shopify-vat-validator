@@ -48,4 +48,19 @@ async function validateVAT(vatNumber) {
         isValid: false,
         message: 'Ongeldig BTW nummer.',
         details: {
-          ...
+          ...data,
+          isValid: false
+        }
+      };
+    }
+  } catch (error) {
+    console.error('VIES API error:', error);
+    return {
+      isValid: false,
+      message: 'Er is een fout opgetreden bij het valideren van het BTW nummer.',
+      error: error.message
+    };
+  }
+}
+
+module.exports = { validateVAT };
