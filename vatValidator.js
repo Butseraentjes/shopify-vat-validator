@@ -2,6 +2,9 @@
 const fetch = require('node-fetch');
 const https = require('https');
 
+// Constante voor het land van de webshop
+const SHOP_COUNTRY = 'BE';
+
 async function validateVAT(vatNumber) {
   try {
     const formatValidation = validateVATFormat(vatNumber);
@@ -50,7 +53,7 @@ async function validateVAT(vatNumber) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // Verbeterde XML parsing
+    // XML parsing
     const isValid = responseText.includes('<ns2:valid>true</ns2:valid>');
     const nameMatch = responseText.match(/<ns2:name>(.*?)<\/ns2:name>/s);
     const addressMatch = responseText.match(/<ns2:address>(.*?)<\/ns2:address>/s);
@@ -58,23 +61,39 @@ async function validateVAT(vatNumber) {
     const name = nameMatch ? nameMatch[1].trim() : '';
     const address = addressMatch ? addressMatch[1].trim() : '';
 
-    console.log('Parsed results:', { isValid, name, address });
+    // Check of BTW-vrijstelling van toepassing is
+    const isExempt = isValid && countryCode !== SHOP_COUNTRY;
+
+    console.log('Parsed results:', { isValid, name, address, isExempt });
+
+    let message;
+    if (isValid) {
+      if (isExempt) {
+        message = `BTW nummer is geldig voor: ${name}${address ? ` (${address})` : ''}. BTW-vrijstelling wordt toegepast omdat het een niet-Belgisch BTW nummer betreft.`;
+      } else {
+        message = `BTW nummer is geldig voor: ${name}${address ? ` (${address})` : ''}. BTW-vrijstelling is NIET van toepassing omdat het een Belgisch BTW nummer betreft.`;
+      }
+    } else {
+      message = 'Ongeldig BTW nummer.';
+    }
 
     return {
       isValid: isValid,
-      message: isValid 
-        ? `BTW nummer is geldig voor: ${name}${address ? ` (${address})` : ''}. BTW-vrijstelling wordt toegepast.`
-        : 'Ongeldig BTW nummer.',
+      isExempt: isExempt,
+      message: message,
       details: {
         isValid: isValid,
+        isExempt: isExempt,
         name: name,
-        address: address
+        address: address,
+        countryCode: countryCode
       }
     };
   } catch (error) {
     console.error('Gedetailleerde validatie error:', error);
     return {
       isValid: false,
+      isExempt: false,
       message: `Validatie fout: ${error.message}`,
       error: error.message
     };
@@ -95,6 +114,7 @@ function validateVATFormat(vatNumber) {
   if (!patterns[countryCode]) {
     return {
       isValid: false,
+      isExempt: false,
       message: `Land code ${countryCode} wordt niet ondersteund. Alleen BE en NL zijn momenteel beschikbaar.`
     };
   }
@@ -105,6 +125,7 @@ function validateVATFormat(vatNumber) {
   if (!isValidFormat) {
     return {
       isValid: false,
+      isExempt: false,
       message: `Ongeldig formaat voor ${countryCode} BTW nummer. Gebruik ${countryCode === 'BE' ? 'BE0123456789' : 'NL123456789B01'} formaat.`
     };
   }
