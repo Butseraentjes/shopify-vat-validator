@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const { validateVAT } = require('./vatValidator');
@@ -18,11 +19,9 @@ app.post('/api/validate-vat', async (req, res) => {
         message: 'BTW nummer is verplicht' 
       });
     }
-    // BTW nummer opschonen (spaties en speciale tekens verwijderen)
-    const cleanVatNumber = vatNumber.replace(/[^A-Z0-9]/gi, '');
-    
-    console.log('Validating VAT number:', cleanVatNumber); // Debug logging
-    const validationResult = await validateVAT(cleanVatNumber);
+
+    console.log('Validating VAT number:', vatNumber); // Debug logging
+    const validationResult = await validateVAT(vatNumber);
     console.log('Validation result:', validationResult); // Debug logging
     
     res.json(validationResult);
@@ -34,11 +33,6 @@ app.post('/api/validate-vat', async (req, res) => {
       error: error.message 
     });
   }
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
 });
 
 app.listen(PORT, () => {
