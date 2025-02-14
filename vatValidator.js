@@ -2,7 +2,6 @@
 const fetch = require('node-fetch');
 const https = require('https');
 
-// Constante voor het land van de webshop
 const SHOP_COUNTRY = 'BE';
 
 async function validateVAT(vatNumber) {
@@ -13,7 +12,12 @@ async function validateVAT(vatNumber) {
     }
 
     const countryCode = vatNumber.substring(0, 2).toUpperCase();
-    const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
+    let number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
+    
+    // Speciale behandeling voor NL BTW nummers
+    if (countryCode === 'NL' && !number.startsWith('00')) {
+      number = '00' + number;
+    }
     
     console.log(`Validating VAT: ${countryCode} ${number}`);
     
