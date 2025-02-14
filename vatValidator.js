@@ -6,44 +6,32 @@ async function validateVAT(vatNumber) {
     const countryCode = vatNumber.substring(0, 2).toUpperCase();
     const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
     
-    // Log voor debugging
-    console.log('Validating:', {
-      original: vatNumber,
-      countryCode,
-      number,
-      url: `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`
-    });
-
+    // Correcte VIES API endpoint
     const response = await fetch(
-      `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`,
-      {
+      `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`, {
         headers: {
           'Accept': 'application/json'
         }
       }
     );
-
-    console.log('Response status:', response.status); // Debug log
-
+    
     if (!response.ok) {
+      console.error('VIES API error status:', response.status);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
+    
     const data = await response.json();
-    console.log('API Response:', data); // Debug log
-
+    console.log('VIES response:', data); // Debug logging
+    
     return {
       isValid: data.valid === true,
       message: data.valid === true
-        ? `BTW nummer is geldig voor: ${data.name}. BTW-vrijstelling wordt toegepast.`
+        ? 'Geldig BTW nummer. BTW-vrijstelling wordt toegepast.'
         : 'Ongeldig BTW nummer.',
-      details: {
-        ...data,
-        isValid: data.valid === true
-      }
+      details: data
     };
   } catch (error) {
-    console.error('VIES API error:', error);
+    console.error('VIES API fout:', error);
     return {
       isValid: false,
       message: 'Er is een fout opgetreden bij het valideren van het BTW nummer.',
