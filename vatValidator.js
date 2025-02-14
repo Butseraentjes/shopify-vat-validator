@@ -1,44 +1,37 @@
+// vatValidator.js
 const fetch = require('node-fetch');
 
 async function validateVAT(vatNumber) {
   try {
     const countryCode = vatNumber.substring(0, 2).toUpperCase();
-    const number = vatNumber.substring(2).replace(/[^A-Za-z0-9]/g, '');
-
-    // Direct afwijzen van Belgische nummers
-    if (countryCode === 'BE') {
-      return {
-        isValid: false,
-        message: 'Belgische BTW nummers komen niet in aanmerking voor vrijstelling'
-      };
-    }
-
-    console.log('Validating VAT:', { countryCode, number });
-
+    const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
+    
     const response = await fetch(
-      `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }
+      `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`
     );
     
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
-    console.log('VIES Response:', data);
-
+    
     return {
-      isValid: data.valid,
-      message: data.valid 
-        ? `BTW nummer is geldig en vrijgesteld van BTW` 
-        : `BTW nummer is ongeldig`
+      isValid: data.valid === true,
+      message: data.valid === true
+        ? `BTW nummer is geldig voor: ${data.name}. BTW-vrijstelling wordt toegepast.`
+        : 'Ongeldig BTW nummer.',
+      details: {
+        ...data,
+        isValid: data.valid === true
+      }
     };
   } catch (error) {
-    console.error('VAT Validation Error:', error);
+    console.error('VIES API error:', error);
     return {
       isValid: false,
-      message: 'Er is een fout opgetreden bij het valideren. Controleer het nummer en probeer het opnieuw.'
+      message: 'Er is een fout opgetreden bij het valideren van het BTW nummer.',
+      error: error.message
     };
   }
 }
