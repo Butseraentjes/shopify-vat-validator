@@ -2,7 +2,6 @@
 const express = require('express');
 const cors = require('cors');
 const { validateVAT } = require('./vatValidator');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -20,10 +19,10 @@ app.post('/api/validate-vat', async (req, res) => {
       });
     }
 
-    console.log('Received VAT number:', vatNumber); // Debug logging
-    const validationResult = await validateVAT(vatNumber);
-    console.log('Validation result:', validationResult); // Debug logging
+    // Clean the VAT number
+    const cleanVatNumber = vatNumber.replace(/[.\s-]/g, '').toUpperCase();
     
+    const validationResult = await validateVAT(cleanVatNumber);
     res.json(validationResult);
   } catch (error) {
     console.error('VAT validation error:', error);
@@ -35,7 +34,6 @@ app.post('/api/validate-vat', async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
