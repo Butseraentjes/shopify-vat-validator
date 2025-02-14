@@ -6,14 +6,22 @@ async function validateVAT(vatNumber) {
     const countryCode = vatNumber.substring(0, 2).toUpperCase();
     const number = vatNumber.substring(2).replace(/[^0-9A-Za-z]/g, '');
     
-    // Updated VIES API endpoint
-    const response = await fetch(`https://ec.europa.eu/taxation_customs/vies/api/v1/vat/${countryCode}${number}`);
+    // Correcte VIES API endpoint
+    const response = await fetch(
+      `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
     
     if (!response.ok) {
+      console.error('VIES API error status:', response.status);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
+    console.log('VIES response:', data); // Debug logging
     
     return {
       isValid: data.valid === true,
