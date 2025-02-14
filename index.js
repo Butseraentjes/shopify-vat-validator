@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const cors = require('cors');
 const { validateVAT } = require('./vatValidator');
@@ -9,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// BTW validatie endpoint
 app.post('/api/validate-vat', async (req, res) => {
   try {
     const { vatNumber } = req.body;
@@ -21,6 +21,7 @@ app.post('/api/validate-vat', async (req, res) => {
     }
 
     console.log('Received VAT number:', vatNumber); // Debug logging
+
     const validationResult = await validateVAT(vatNumber);
     console.log('Validation result:', validationResult); // Debug logging
     
