@@ -1,6 +1,6 @@
 class VATCheckout {
   constructor() {
-    this.apiBaseUrl = 'https://jouw-render-url.onrender.com'; // Vervang dit met je Render URL
+    this.apiBaseUrl = 'this.apiBaseUrl = 'https://shopify-vat-validator.onrender.com';  // Update deze regel'; // Vervang dit met je Render URL
     this.init();
   }
 
